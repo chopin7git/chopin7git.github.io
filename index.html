@@ -35,9 +35,8 @@
             <p class="result-money" id="commissionNum">0</p >
         </div>
     </div>
-
     <script>
-        // 分段档位：上限金额、对应费率
+        // 分段档位，最高档位400000，超出全部按35%计算
         const tierList = [
             [10000, 0.10],
             [20000, 0.10],
@@ -51,13 +50,11 @@
             [300000, 0.30],
             [400000, 0.35]
         ];
-
         function calcCommission(){
             let val = document.getElementById('amount').value.trim();
             let errorDom = document.getElementById('errorTip');
             let resultBox = document.getElementById('resultBox');
             let numDom = document.getElementById('commissionNum');
-
             errorDom.innerText = '';
             resultBox.style.display = 'none';
 
@@ -66,9 +63,12 @@
                 errorDom.innerText = '请输入合法的大于0的金额';
                 return;
             }
-
             let commission = 0;
             let prev = 0;
+            const maxLimit = 400000;
+            const topRate = 0.35;
+
+            // 40万以内分段计算
             for(let i=0; i<tierList.length; i++){
                 let [limit, rate] = tierList[i];
                 if(amount <= prev) break;
@@ -76,6 +76,12 @@
                 commission += currentPart * rate;
                 prev = limit;
                 if(amount <= limit) break;
+            }
+
+            // 超出40万的部分，统一按35%计算
+            if(amount > maxLimit){
+                let excess = amount - maxLimit;
+                commission += excess * topRate;
             }
 
             commission = Math.round(commission * 100) / 100;
