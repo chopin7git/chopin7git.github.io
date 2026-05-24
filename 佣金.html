@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二手房产佣金计算器</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft Yahei,sans-serif;}
+        body{background:#f5f7fa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+        .calc-box{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);padding:40px 30px;width:100%;max-width:450px;}
+        h2{text-align:center;color:#222;margin-bottom:30px;font-weight:600;}
+        .input-item{margin-bottom:25px;}
+        label{display:block;color:#555;margin-bottom:8px;font-size:15px;}
+        input{width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 15px;font-size:16px;outline:none;transition:0.3s;}
+        input:focus{border-color:#2563eb;}
+        .btn{width:100%;height:48px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:0.3s;}
+        .btn:hover{background:#1d4ed8;}
+        .result{margin-top:25px;padding:20px;background:#f0f7ff;border-radius:8px;text-align:center;}
+        .result-text{font-size:16px;color:#444;margin-bottom:8px;}
+        .result-money{font-size:24px;color:#2563eb;font-weight:bold;}
+        .error{color:#ef4444;margin-top:10px;text-align:center;}
+    </style>
+</head>
+<body>
+    <div class="calc-box">
+        <h2>佣金金额计算器</h2>
+        <div class="input-item">
+            <label>输入生意金额</label>
+            <input type="number" id="amount" placeholder="请输入数值">
+        </div>
+        <button class="btn" onclick="calcCommission()">立即计算佣金</button>
+        <div class="error" id="errorTip"></div>
+        <div class="result" id="resultBox" style="display:none;">
+            <p class="result-text">对应实收佣金</p >
+            <p class="result-money" id="commissionNum">0</p >
+        </div>
+    </div>
+
+    <script>
+        // 分段档位：上限金额、对应费率
+        const tierList = [
+            [10000, 0.10],
+            [20000, 0.10],
+            [30000, 0.15],
+            [40000, 0.15],
+            [50000, 0.20],
+            [60000, 0.20],
+            [70000, 0.20],
+            [80000, 0.25],
+            [150000, 0.25],
+            [300000, 0.30],
+            [400000, 0.35]
+        ];
+
+        function calcCommission(){
+            let val = document.getElementById('amount').value.trim();
+            let errorDom = document.getElementById('errorTip');
+            let resultBox = document.getElementById('resultBox');
+            let numDom = document.getElementById('commissionNum');
+
+            errorDom.innerText = '';
+            resultBox.style.display = 'none';
+
+            let amount = parseFloat(val);
+            if(isNaN(amount) || amount <= 0){
+                errorDom.innerText = '请输入合法的大于0的金额';
+                return;
+            }
+
+            let commission = 0;
+            let prev = 0;
+            for(let i=0; i<tierList.length; i++){
+                let [limit, rate] = tierList[i];
+                if(amount <= prev) break;
+                let currentPart = Math.min(amount, limit) - prev;
+                commission += currentPart * rate;
+                prev = limit;
+                if(amount <= limit) break;
+            }
+
+            commission = Math.round(commission * 100) / 100;
+            resultBox.style.display = 'block';
+            numDom.innerText = commission.toLocaleString();
+        }
+    </script>
+</body>
+</html>
