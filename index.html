@@ -3,12 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>二手房产佣金计算器</title>
+    <title>房产佣金计算器</title>
     <style>
         *{margin:0;padding:0;box-sizing:border-box;font-family:Microsoft Yahei,sans-serif;}
         body{background:#f5f7fa;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
         .calc-box{background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.1);padding:40px 30px;width:100%;max-width:450px;}
         h2{text-align:center;color:#222;margin-bottom:30px;font-weight:600;}
+
+        /* 标签切换样式 */
+        .tab-wrap{
+            display: flex;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 25px;
+        }
+        .tab-item{
+            flex: 1;
+            text-align: center;
+            line-height: 40px;
+            cursor: pointer;
+            color: #555;
+            background: #f8f9fa;
+            transition: 0.3s;
+        }
+        .tab-item.active{
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .panel{display: none;}
+        .panel.show{display: block;}
+
         .input-item{margin-bottom:25px;}
         label{display:block;color:#555;margin-bottom:8px;font-size:15px;}
         input{width:100%;height:48px;border:1px solid #ddd;border-radius:8px;padding:0 15px;font-size:16px;outline:none;transition:0.3s;}
@@ -24,19 +50,90 @@
 <body>
     <div class="calc-box">
         <h2>佣金金额计算器</h2>
-        <div class="input-item">
-            <label>输入生意金额</label>
-            <input type="number" id="amount" placeholder="请输入数值">
+
+        <!-- 切换标签 -->
+        <div class="tab-wrap">
+            <div class="tab-item active" onclick="switchTab(1)">一手佣金</div>
+            <div class="tab-item" onclick="switchTab(2)">二手佣金</div>
         </div>
-        <button class="btn" onclick="calcCommission()">立即计算佣金</button>
-        <div class="error" id="errorTip"></div>
-        <div class="result" id="resultBox" style="display:none;">
-            <p class="result-text">对应实收佣金</p >
-            <p class="result-money" id="commissionNum">0</p >
+
+        <!-- 一手佣金面板 -->
+        <div class="panel show" id="firstPanel">
+            <div class="input-item">
+                <label>输入生意金额</label>
+                <input type="number" id="firstAmount" placeholder="请输入数值">
+            </div>
+            <button class="btn" onclick="calcFirstCommission()">立即计算佣金</button>
+            <div class="error" id="firstError"></div>
+            <div class="result" id="firstResult" style="display:none;">
+                <p class="result-text">对应实收佣金</p >
+                <p class="result-money" id="firstNum">0</p >
+            </div>
+        </div>
+
+        <!-- 二手佣金面板（原代码完整保留） -->
+        <div class="panel" id="secondPanel">
+            <div class="input-item">
+                <label>输入生意金额</label>
+                <input type="number" id="secondAmount" placeholder="请输入数值">
+            </div>
+            <button class="btn" onclick="calcSecondCommission()">立即计算佣金</button>
+            <div class="error" id="secondError"></div>
+            <div class="result" id="secondResult" style="display:none;">
+                <p class="result-text">对应实收佣金</p >
+                <p class="result-money" id="secondNum">0</p >
+            </div>
         </div>
     </div>
+
     <script>
-        // 分段档位，最高档位400000，超出全部按35%计算
+        // 标签切换
+        function switchTab(type){
+            const tabs = document.querySelectorAll('.tab-item');
+            const panels = document.querySelectorAll('.panel');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            panels.forEach(panel => panel.classList.remove('show'));
+            tabs[type-1].classList.add('active');
+            if(type === 1){
+                document.getElementById('firstPanel').classList.add('show');
+            }else{
+                document.getElementById('secondPanel').classList.add('show');
+            }
+        }
+
+        // ===================== 一手佣金计算 超额累进规则 =====================
+        function calcFirstCommission(){
+            let val = document.getElementById('firstAmount').value.trim();
+            let errorDom = document.getElementById('firstError');
+            let resultBox = document.getElementById('firstResult');
+            let numDom = document.getElementById('firstNum');
+            errorDom.innerText = '';
+            resultBox.style.display = 'none';
+
+            let amount = parseFloat(val);
+            if(isNaN(amount) || amount < 10000){
+                errorDom.innerText = '请输入不低于10000的合法金额';
+                return;
+            }
+
+            let commission = 0;
+            const tier1 = 80000;
+            const tier2 = 180000;
+
+            if(amount <= tier1){
+                commission = amount * 0.22;
+            }else if(amount <= tier2){
+                commission = tier1 * 0.22 + (amount - tier1) * 0.27;
+            }else{
+                commission = tier1 * 0.22 + (tier2 - tier1) * 0.27 + (amount - tier2) * 0.32;
+            }
+
+            commission = Math.round(commission * 100) / 100;
+            resultBox.style.display = 'block';
+            numDom.innerText = commission.toLocaleString();
+        }
+
+        // ===================== 二手佣金计算 原代码完全保留 =====================
         const tierList = [
             [10000, 0.10],
             [20000, 0.10],
@@ -50,11 +147,11 @@
             [300000, 0.30],
             [400000, 0.35]
         ];
-        function calcCommission(){
-            let val = document.getElementById('amount').value.trim();
-            let errorDom = document.getElementById('errorTip');
-            let resultBox = document.getElementById('resultBox');
-            let numDom = document.getElementById('commissionNum');
+        function calcSecondCommission(){
+            let val = document.getElementById('secondAmount').value.trim();
+            let errorDom = document.getElementById('secondError');
+            let resultBox = document.getElementById('secondResult');
+            let numDom = document.getElementById('secondNum');
             errorDom.innerText = '';
             resultBox.style.display = 'none';
 
@@ -68,7 +165,6 @@
             const maxLimit = 400000;
             const topRate = 0.35;
 
-            // 40万以内分段计算
             for(let i=0; i<tierList.length; i++){
                 let [limit, rate] = tierList[i];
                 if(amount <= prev) break;
@@ -78,7 +174,6 @@
                 if(amount <= limit) break;
             }
 
-            // 超出40万的部分，统一按35%计算
             if(amount > maxLimit){
                 let excess = amount - maxLimit;
                 commission += excess * topRate;
